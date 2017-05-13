@@ -7,8 +7,7 @@ go:
   - 1.7.4
 
 install:
-  - go get k8s.io/client-go
-  - go get k8s.io/apimachinery
+  - go get k8s.io/client-go/...
   - go get github.com/Sirupsen/logrus
 
 script:  
