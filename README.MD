@@ -1,4 +1,4 @@
-Kubernetes-Auto-Ingress
+kubernetes-auto-ingress
 =======================
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/hxquangnhat/kubernetes-auto-ingress)](https://goreportcard.com/report/github.com/hxquangnhat/kubernetes-auto-ingress)
