@@ -46,6 +46,8 @@ spec:
     app: myapp
 ```
 
+The ingress for this `myapp-service` will have the same name `myapp-service`. The servername to access this service would be `myapp-service.example.com`.
+
 How to build it
 ---------------
 
