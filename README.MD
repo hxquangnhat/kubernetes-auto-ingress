@@ -1,6 +1,6 @@
 kubernetes-auto-ingress
 =======================
-
+[![Build Status](https://travis-ci.org/hxquangnhat/kubernetes-auto-ingress.svg?branch=master)](https://travis-ci.org/hxquangnhat/kubernetes-auto-ingress)
 [![Go Report Card](https://goreportcard.com/badge/github.com/hxquangnhat/kubernetes-auto-ingress)](https://goreportcard.com/report/github.com/hxquangnhat/kubernetes-auto-ingress)
 
 Description
