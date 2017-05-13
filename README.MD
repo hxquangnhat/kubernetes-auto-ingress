@@ -14,12 +14,11 @@ Require nginx-ingress-controller running.
 
 Below describes how to run auto-ingress on `default` namespace with your `secret` for domain `example.com`
 
-`openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout tls.key -out tls.crt -subj "/CN=*.example.com"
-
+```
+openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout tls.key -out tls.crt -subj "/CN=*.example.com"
 kubectl create secret tls secret --key tls.key --cert tls.crt
-
-kubectl create -f auto-ingress-dep.yaml`
-
+kubectl create -f auto-ingress-dep.yaml
+```
 Then, for every services you want to be ingressed need to put label **autoingress: true**.
 
 Service which is already ingressed can be un-ingressed by setting **autoingress: false**.
@@ -47,9 +46,8 @@ How to build it
 
 Clone the repository and build the container
 
-`
+```
 $ go get github.com/hxquangnhat/kubernetes-auto-ingress
-
 $ cd $GOPATH/github.com/hxquangnhat/kubernetes-auto-ingress
-
-$ make container`
+$ make container
+```
