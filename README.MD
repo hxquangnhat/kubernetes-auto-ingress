@@ -1,6 +1,11 @@
 Kubernetes-Auto-Ingress
 =======================
 
+[![Go Report Card](https://goreportcard.com/badge/github.com/hxquangnhat/kubernetes-auto-ingress)](https://goreportcard.com/report/github.com/hxquangnhat/kubernetes-auto-ingress)
+
+Description
+-----------
+
 Dynamically create an ingress for a service which specifies "autoingress: true" label.
 
 Use `TLS/SSL` and backend is `/` by default.
