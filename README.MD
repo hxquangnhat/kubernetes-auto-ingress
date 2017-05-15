@@ -1,6 +1,6 @@
 kubernetes-auto-ingress
 =======================
-
+[![Build Status](https://travis-ci.org/hxquangnhat/kubernetes-auto-ingress.svg?branch=master)](https://travis-ci.org/hxquangnhat/kubernetes-auto-ingress)
 [![Go Report Card](https://goreportcard.com/badge/github.com/hxquangnhat/kubernetes-auto-ingress)](https://goreportcard.com/report/github.com/hxquangnhat/kubernetes-auto-ingress)
 
 Description
@@ -45,6 +45,8 @@ spec:
   selector:
     app: myapp
 ```
+
+The ingress for this `myapp-service` will have the same name `myapp-service`. The servername to access this service would be `myapp-service.example.com`.
 
 How to build it
 ---------------
