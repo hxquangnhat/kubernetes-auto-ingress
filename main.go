@@ -13,7 +13,7 @@ import (
 
     "k8s.io/apimachinery/pkg/fields"
     "k8s.io/apimachinery/pkg/util/intstr"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+    metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
     log "github.com/Sirupsen/logrus"
 )
@@ -43,18 +43,18 @@ func main() {
     }
 
     //map to keep track of which services have been already auto-ingressed
-	var m map[string]extensions.Ingress
-    m = make(map[string]extensions.Ingress)
+	var svcIngPair map[string]extensions.Ingress
+    svcIngPair = make(map[string]extensions.Ingress)
 
     //get current ingresses on cluster
     log.Info("Initializing mapping between ingresses and services...")
-	err = createIngressServiceMap(clientset, m)
+	err = createIngressServiceMap(clientset, svcIngPair)
     if err != nil {
         log.Errorln(err.Error())
         return
     }
 
-    log.Info("Initialized map: ", reflect.ValueOf(m).MapKeys())
+    log.Info("Initialized map: ", reflect.ValueOf(svcIngPair).MapKeys())
 
     //create a watch to listen for create/update/delete event on service
     //new created service will be auto-ingressed if it specifies label "autoingress: true"
@@ -70,16 +70,16 @@ func main() {
                 svc := obj.(*core.Service)
                 log.Info("Service added: ", svc.Name)
                 lb := svc.Labels
-                if _, found1 := m[svc.Name]; !found1 {
-                    if val, found2 := lb["autoingress"]; found2 {
-                        if val == "true" {
+                if _, found1 := svcIngPair[svc.Name]; !found1 {
+                    if val, found2 := lb["auto-ingress/enabled"]; found2 {
+                        if val == "enabled" {
                             newIng, err := createIngressForService(clientset, *svc)
                             if err != nil {
                                 log.Errorln(err.Error())
                             } else {
                                 log.Info("Created new ingress for service: ", svc.Name)
-                                m[svc.Name] = *newIng
-                                log.Info("Updated map: ", reflect.ValueOf(m).MapKeys())
+                                svcIngPair[svc.Name] = *newIng
+                                log.Info("Updated map: ", reflect.ValueOf(svcIngPair).MapKeys())
                             }
                         }
                     }
@@ -88,41 +88,41 @@ func main() {
             DeleteFunc: func(obj interface{}) {
                 svc := obj.(*core.Service)
                 log.Info("Service deleted: ", svc.Name)
-				if ing, found := m[svc.Name]; found {
+				if ing, found := svcIngPair[svc.Name]; found {
 					clientset.Ingresses(namespace).Delete(ing.Name, nil)
 					log.Info("Deleted ingress for service: ", svc.Name)
-                    delete(m, svc.Name)
-                    log.Info("Updated map: ", reflect.ValueOf(m).MapKeys())
+                    delete(svcIngPair, svc.Name)
+                    log.Info("Updated map: ", reflect.ValueOf(svcIngPair).MapKeys())
 				}
             },
             UpdateFunc:func(oldObj, newObj interface{}) {
                 newSvc := newObj.(*core.Service)
                 log.Info("Service changed: ", newSvc.Name)
                 lb := newSvc.Labels
-                if ing, found1 := m[newSvc.Name]; found1 {
-                    if val, found2 := lb["autoingress"]; !found2 {
+                if ing, found1 := svcIngPair[newSvc.Name]; found1 {
+                    if val, found2 := lb["auto-ingress/enabled"]; !found2 {
                         clientset.Ingresses(namespace).Delete(ing.Name, nil)
                         log.Info("Deleted ingress for service: ", newSvc.Name)
-                        delete(m, newSvc.Name)
-                        log.Info("Updated map: ", reflect.ValueOf(m).MapKeys())
+                        delete(svcIngPair, newSvc.Name)
+                        log.Info("Updated map: ", reflect.ValueOf(svcIngPair).MapKeys())
                     } else {
-                        if val == "false" {
+                        if val == "disabled" {
                             clientset.Ingresses(namespace).Delete(ing.Name, nil)
                             log.Info("Deleted ingress for service: ", newSvc.Name)
-                            delete(m, newSvc.Name)
-                            log.Info("Updated map: ", reflect.ValueOf(m).MapKeys())
+                            delete(svcIngPair, newSvc.Name)
+                            log.Info("Updated map: ", reflect.ValueOf(svcIngPair).MapKeys())
                         }
                     }
                 } else {
-                    if val, found3 := lb["autoingress"]; found3 {
-                        if val == "true" {
+                    if val, found3 := lb["auto-ingress/enabled"]; found3 {
+                        if val == "enabled" {
                             newIng, err := createIngressForService(clientset, *newSvc)
                             if err != nil {
                                 log.Errorln(err.Error())
                             } else {
                                 log.Info("created new ingress for service: ", newSvc.Name)
-                                m[newSvc.Name] = *newIng
-                                log.Info("Updated map: ", reflect.ValueOf(m).MapKeys())
+                                svcIngPair[newSvc.Name] = *newIng
+                                log.Info("Updated map: ", reflect.ValueOf(svcIngPair).MapKeys())
                             }
                         }
                     }
@@ -169,8 +169,8 @@ func createIngressServiceMap(clientset *kubernetes.Clientset, m map[string]exten
 	for i:=0; i < len(services.Items); i++ {
         if _, found1 := m[services.Items[i].GetName()]; !found1 {
             lb := services.Items[i].GetLabels()
-            if val, found2 := lb["autoingress"]; found2 {
-                if val == "true" {
+            if val, found2 := lb["auto-ingress/enabled"]; found2 {
+                if val == "enabled" {
                     newIng, err := createIngressForService(clientset, services.Items[i])
                     if err != nil {
                         return err

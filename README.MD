@@ -1,5 +1,6 @@
 kubernetes-auto-ingress
 =======================
+
 [![Build Status](https://travis-ci.org/hxquangnhat/kubernetes-auto-ingress.svg?branch=master)](https://travis-ci.org/hxquangnhat/kubernetes-auto-ingress)
 [![Go Report Card](https://goreportcard.com/badge/github.com/hxquangnhat/kubernetes-auto-ingress)](https://goreportcard.com/report/github.com/hxquangnhat/kubernetes-auto-ingress)
 
@@ -24,9 +25,9 @@ openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout tls.key -out tls.crt
 kubectl create secret tls secret --key tls.key --cert tls.crt
 kubectl create -f auto-ingress-dep.yaml
 ```
-Then, for every services you want to be ingressed need to put label **autoingress: true**.
+Then, for every services you want to be ingressed need to put label **auto-ingress/enabled: enabled**.
 
-Service which is already ingressed can be un-ingressed by setting **autoingress: false**.
+Service which is already ingressed can be un-ingressed by setting **auto-ingress/enabled: disabled**.
 
 ```yaml
 apiVersion: v1
@@ -35,7 +36,7 @@ metadata:
   name: myapp-service
   labels:
     app: myapp
-    autoingress: 'true'
+    auto-ingress/enabled: 'enabled'
 spec:
   type: LoadBalancer
   ports:
