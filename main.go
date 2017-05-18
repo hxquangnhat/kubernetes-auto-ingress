@@ -2,12 +2,15 @@ package main
 
 import (
     "os"
+    "fmt"
     "time"
+    "flag"
     "reflect"
 
     "k8s.io/client-go/rest"
     "k8s.io/client-go/kubernetes"
     "k8s.io/client-go/tools/cache"
+    "k8s.io/client-go/tools/clientcmd"
     core "k8s.io/client-go/pkg/api/v1"
     extensions "k8s.io/client-go/pkg/apis/extensions/v1beta1"
 
@@ -25,11 +28,23 @@ var (
     namespace = os.Getenv("AUTO_INGRESS_NAMESPACE")
     //secret for ssl/tls of namespace where auto-ingress is running
     secret = os.Getenv("AUTO_INGRESS_SECRET")
+    //read kubeconfig
+    kubeconfig = flag.String("kubeconfig", "", "absolute path to the kubeconfig file")
 )
 
 func main() {
-    //get config when running inside Kubernetes
-    config, err := rest.InClusterConfig()
+    flag.Parse()
+
+    var err error
+    var config *rest.Config
+
+    //if kubeconfig is specified, use out-of-cluster
+    if *kubeconfig != "" {
+        config, err = clientcmd.BuildConfigFromFlags("", *kubeconfig)
+    } else {
+        //get config when running inside Kubernetes
+        config, err = rest.InClusterConfig()
+    }
 
     if err != nil {
         log.Errorln(err.Error())

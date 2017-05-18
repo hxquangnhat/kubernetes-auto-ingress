@@ -23,8 +23,13 @@ Below describes how to run auto-ingress on `default` namespace with your `secret
 ```
 openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout tls.key -out tls.crt -subj "/CN=*.example.com"
 kubectl create secret tls secret --key tls.key --cert tls.crt
-kubectl create -f auto-ingress-dep.yaml
+kubectl create -f hack/deployment.yaml
 ```
+
+If you want to use it outside of the cluster, provide the `kubeconfig` with config file:
+
+`./kubernetes-auto-ingress -kubeconfig=./config`
+
 Then, for every services you want to be ingressed need to put label **auto-ingress/enabled: enabled**.
 
 Service which is already ingressed can be un-ingressed by setting **auto-ingress/enabled: disabled**.
