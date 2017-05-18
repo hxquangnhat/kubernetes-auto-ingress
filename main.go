@@ -2,7 +2,6 @@ package main
 
 import (
     "os"
-    "fmt"
     "time"
     "flag"
     "reflect"
