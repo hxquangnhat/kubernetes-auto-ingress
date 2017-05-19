@@ -23,8 +23,6 @@ import (
 var (
     //dns wildcard record for all applications created, should be like example.com
     wildcardRecord = os.Getenv("AUTO_INGRESS_SERVER_NAME")
-    //namespace where auto-ingress will be activated
-    namespace = os.Getenv("AUTO_INGRESS_NAMESPACE")
     //secret for ssl/tls of namespace where auto-ingress is running
     secret = os.Getenv("AUTO_INGRESS_SECRET")
     //read kubeconfig
@@ -73,7 +71,7 @@ func main() {
     //create a watch to listen for create/update/delete event on service
     //new created service will be auto-ingressed if it specifies label "autoingress: true"
     //deleted service will be remove the associated ingress if it specifies label "autoingress: true"
-    watchlist := cache.NewListWatchFromClient(clientset.Core().RESTClient(), "services", namespace,
+    watchlist := cache.NewListWatchFromClient(clientset.Core().RESTClient(), "services", "",
         fields.Everything())
     _, controller := cache.NewInformer(
         watchlist,
@@ -103,7 +101,7 @@ func main() {
                 svc := obj.(*core.Service)
                 log.Info("Service deleted: ", svc.Name)
 				if ing, found := svcIngPair[svc.Name]; found {
-					clientset.Ingresses(namespace).Delete(ing.Name, nil)
+					clientset.Ingresses(svc.Namespace).Delete(ing.Name, nil)
 					log.Info("Deleted ingress for service: ", svc.Name)
                     delete(svcIngPair, svc.Name)
                     log.Info("Updated map: ", reflect.ValueOf(svcIngPair).MapKeys())
@@ -115,13 +113,13 @@ func main() {
                 lb := newSvc.Labels
                 if ing, found1 := svcIngPair[newSvc.Name]; found1 {
                     if val, found2 := lb["auto-ingress/enabled"]; !found2 {
-                        clientset.Ingresses(namespace).Delete(ing.Name, nil)
+                        clientset.Ingresses(newSvc.Namespace).Delete(ing.Name, nil)
                         log.Info("Deleted ingress for service: ", newSvc.Name)
                         delete(svcIngPair, newSvc.Name)
                         log.Info("Updated map: ", reflect.ValueOf(svcIngPair).MapKeys())
                     } else {
                         if val == "disabled" {
-                            clientset.Ingresses(namespace).Delete(ing.Name, nil)
+                            clientset.Ingresses(newSvc.Namespace).Delete(ing.Name, nil)
                             log.Info("Deleted ingress for service: ", newSvc.Name)
                             delete(svcIngPair, newSvc.Name)
                             log.Info("Updated map: ", reflect.ValueOf(svcIngPair).MapKeys())
@@ -154,13 +152,13 @@ func main() {
 //create service map in the initial phase to check the current ingresses running on cluster
 func createIngressServiceMap(clientset *kubernetes.Clientset, m map[string]extensions.Ingress) error {
 
-	services, err := clientset.CoreV1().Services(namespace).List(metav1.ListOptions{})
+	services, err := clientset.CoreV1().Services("").List(metav1.ListOptions{})
 
     if err != nil {
         return err
     }
 
-    ingresses, err:= clientset.ExtensionsV1beta1().Ingresses(namespace).List(metav1.ListOptions{})
+    ingresses, err:= clientset.ExtensionsV1beta1().Ingresses("").List(metav1.ListOptions{})
 
     if err != nil {
         return err
@@ -202,12 +200,9 @@ func createIngressServiceMap(clientset *kubernetes.Clientset, m map[string]exten
 func createIngressForService(clientset *kubernetes.Clientset, service core.Service) (*extensions.Ingress, error) {
 	backend := createIngressBackend(service)
 
-    ingressname := service.Name
-    servername := ingressname + "." + wildcardRecord
+    ingress := createIngress(service, backend)
 
-    ingress := createIngress(ingressname, servername, backend)
-
-    newIng, err := clientset.Ingresses(namespace).Create(ingress)
+    newIng, err := clientset.Ingresses(service.Namespace).Create(ingress)
 
     return newIng, err
 }
@@ -233,12 +228,15 @@ func createIngressBackend(service core.Service) extensions.IngressBackend {
 }
 
 //create ingress for associated service
-func createIngress(ingressname string, servername string, backend extensions.IngressBackend) *extensions.Ingress {
+func createIngress(service core.Service, backend extensions.IngressBackend) *extensions.Ingress {
+
+    ingressname := service.Name
+    servername := ingressname + "." + wildcardRecord
 
     return &extensions.Ingress {
         ObjectMeta: metav1.ObjectMeta {
             Name: ingressname,
-            Namespace: namespace,
+            Namespace: service.Namespace,
         },
         Spec: extensions.IngressSpec {
             TLS: []extensions.IngressTLS{

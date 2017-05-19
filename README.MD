@@ -7,7 +7,7 @@ kubernetes-auto-ingress
 Description
 -----------
 
-Dynamically create an ingress for a service which specifies "autoingress: true" label.
+Dynamically create an ingress for a service which specifies "autoingress: true" label, for associated namespace of the service.
 
 Use `TLS/SSL` and backend is `/` by default.
 
@@ -18,7 +18,7 @@ How to use it
 
 Require nginx-ingress-controller running.
 
-Below describes how to run auto-ingress on `default` namespace with your `secret` for domain `example.com`
+Below describes how to run auto-ingress with your `secret` for domain `example.com`
 
 ```
 openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout tls.key -out tls.crt -subj "/CN=*.example.com"

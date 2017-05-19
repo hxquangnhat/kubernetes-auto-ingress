@@ -16,8 +16,6 @@ spec:
       - name: kubernetes-auto-ingress
         image: hxquangnhat/kubernetes-auto-ingress
         env:
-        - name: "AUTO_INGRESS_NAMESPACE"
-          value: "default"
         - name: "AUTO_INGRESS_SECRET"
           value: "secret"
         - name: "AUTO_INGRESS_SERVER_NAME"
