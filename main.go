@@ -158,16 +158,17 @@ func createIngressServiceMap(clientset *kubernetes.Clientset, m map[string]exten
         return err
     }
 
+	//get ingresses from all namespaces
     ingresses, err:= clientset.ExtensionsV1beta1().Ingresses("").List(metav1.ListOptions{})
 
     if err != nil {
         return err
     }
 
+	//get all services which have "auto-ingress/enabled" labels and their associated ingresses
     for i:=0; i < len(ingresses.Items); i++ {
         rules := ingresses.Items[i].Spec.Rules
         for j:=0; j < len(rules); j++ {
-
             paths := rules[j].HTTP.Paths
             for k:=0; k < len(paths); k++ {
                 svcName := paths[k].Backend.ServiceName
@@ -178,9 +179,11 @@ func createIngressServiceMap(clientset *kubernetes.Clientset, m map[string]exten
         }
     }
 
+	//if there is any services with the label "auto-ingress/enabled" but haven't had the ingresses, create them.
 	for i:=0; i < len(services.Items); i++ {
-        if _, found1 := m[services.Items[i].GetName()]; !found1 {
-            lb := services.Items[i].GetLabels()
+		lb := services.Items[i].GetLabels()
+		svcName := services.Items[i].GetName()
+        if _, found1 := m[svcName]; !found1 {
             if val, found2 := lb["auto-ingress/enabled"]; found2 {
                 if val == "enabled" {
                     newIng, err := createIngressForService(clientset, services.Items[i])
@@ -190,7 +193,15 @@ func createIngressServiceMap(clientset *kubernetes.Clientset, m map[string]exten
                     m[services.Items[i].GetName()] = *newIng
                 }
             }
-        }
+        } else {
+			if val, found2 := lb["auto-ingress/enabled"]; found2 {
+				if val == "disabled" {
+					delete(m, svcName)
+				}
+			} else {
+				delete(m, svcName)
+			}
+		}
     }
 
     return nil
