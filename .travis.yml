@@ -4,7 +4,7 @@ notifications:
   email: true
 
 go:
-  - 1.7.4
+  - 1.9.2
 
 install:
   - go get k8s.io/client-go/...
