@@ -5,17 +5,18 @@ import (
     "time"
     "flag"
     "reflect"
-
     "k8s.io/client-go/rest"
     "k8s.io/client-go/kubernetes"
     "k8s.io/client-go/tools/cache"
     "k8s.io/client-go/tools/clientcmd"
-    core "k8s.io/client-go/pkg/api/v1"
-    extensions "k8s.io/client-go/pkg/apis/extensions/v1beta1"
-
+    core "k8s.io/api/core/v1"
+    extensions "k8s.io/api/extensions/v1beta1"
     "k8s.io/apimachinery/pkg/fields"
     "k8s.io/apimachinery/pkg/util/intstr"
     metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+    //comment if not using gcp
+    _ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 
     log "github.com/Sirupsen/logrus"
 )
@@ -101,7 +102,7 @@ func main() {
                 svc := obj.(*core.Service)
                 log.Info("Service deleted: ", svc.Name)
 				if ing, found := svcIngPair[svc.Name]; found {
-					clientset.Ingresses(svc.Namespace).Delete(ing.Name, nil)
+					clientset.Extensions().Ingresses(svc.Namespace).Delete(ing.Name, nil)
 					log.Info("Deleted ingress for service: ", svc.Name)
                     delete(svcIngPair, svc.Name)
                     log.Info("Updated map: ", reflect.ValueOf(svcIngPair).MapKeys())
@@ -113,13 +114,13 @@ func main() {
                 lb := newSvc.Labels
                 if ing, found1 := svcIngPair[newSvc.Name]; found1 {
                     if val, found2 := lb["auto-ingress/enabled"]; !found2 {
-                        clientset.Ingresses(newSvc.Namespace).Delete(ing.Name, nil)
+                        clientset.ExtensionsV1beta1().Ingresses(newSvc.Namespace).Delete(ing.Name, nil)
                         log.Info("Deleted ingress for service: ", newSvc.Name)
                         delete(svcIngPair, newSvc.Name)
                         log.Info("Updated map: ", reflect.ValueOf(svcIngPair).MapKeys())
                     } else {
                         if val == "disabled" {
-                            clientset.Ingresses(newSvc.Namespace).Delete(ing.Name, nil)
+                            clientset.ExtensionsV1beta1().Ingresses(newSvc.Namespace).Delete(ing.Name, nil)
                             log.Info("Deleted ingress for service: ", newSvc.Name)
                             delete(svcIngPair, newSvc.Name)
                             log.Info("Updated map: ", reflect.ValueOf(svcIngPair).MapKeys())
@@ -213,7 +214,7 @@ func createIngressForService(clientset *kubernetes.Clientset, service core.Servi
 
     ingress := createIngress(service, backend)
 
-    newIng, err := clientset.Ingresses(service.Namespace).Create(ingress)
+    newIng, err := clientset.ExtensionsV1beta1().Ingresses(service.Namespace).Create(ingress)
 
     return newIng, err
 }
